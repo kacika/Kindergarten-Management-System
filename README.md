@@ -20,11 +20,12 @@
 
 #### 软件架构
 后端采用Springboot+MyBatis+MySQL+Shrio
-前端使用layui+html+thymeleaf
+前端使用layui+html+thymeleaf2
 
 
 #### 开发环境
 Jdk1.8+IDEA+Maven
 
+![image](1.png)
 ### 说明
 未经许可 不可用于商用用途
