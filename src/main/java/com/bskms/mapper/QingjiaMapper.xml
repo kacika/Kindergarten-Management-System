@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bskms.mapper.QingjiaMapper">
+
+
+  <resultMap type="com.bskms.model.QingjiaEntity" id="qingjiaMap">
+    <result property="id" column="id"/>
+    <result property="parentName" column="parent_name"/>
+    <result property="childName" column="child_name"/>
+    <result property="type" column="type"/>
+    <result property="applyDate" column="apply_date"/>
+    <result property="applyStartDate" column="apply_start_date"/>
+    <result property="applyEndDate" column="apply_end_date"/>
+    <result property="detail" column="detail"/>
+    <result property="status" column="status"/>
+  </resultMap>
+  <insert id="addQJ" parameterType="com.bskms.model.QingjiaEntity" useGeneratedKeys="true" keyProperty="id">
+    insert into qingjia(child_name,parent_name,detail,apply_date,apply_start_date,apply_end_date,type,status)
+                          values ( #{childName,jdbcType=VARCHAR},
+                                  #{parentName,jdbcType=VARCHAR},
+                                  #{detail,jdbcType=VARCHAR},
+                                   #{applyDate,jdbcType=DATE},
+                                   #{applyStartDate,jdbcType=DATE},
+                                   #{applyEndDate,jdbcType=DATE},
+                                    #{type}, #{status}
+                            )
+  </insert>
+  <update id="updateQJ">
+    update qingjia
+<set>
+      <if test="childName != null and childName!=''">
+        child_name =#{childName,jdbcType=VARCHAR},
+      </if>
+  <if test="parentName != null and parentName!=''">
+    parent_name =#{parentName,jdbcType=VARCHAR},
+  </if>
+  <if test="detail != null and detail!=''">
+    detail =#{detail,jdbcType=VARCHAR},
+  </if>
+  <if test="type != null">
+    type =#{type}
+  </if>
+  <if test="status != null">
+    status =#{status}
+  </if>
+   <if test="applyStartDate != null and applyStartDate!=''">
+    apply_start_date =#{applyStartDate,jdbcType=DATE}
+  </if>
+  <if test="applyEndDate != null and applyEndDate!=''">
+    apply_end_date =#{applyEndDate,jdbcType=DATE}
+  </if>
+  where id = #{id,jdbcType=INTEGER}
+</set>
+  </update>
+  <delete id="delById">
+    delete from qingjia where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <select id="getData" resultType="com.bskms.model.QingjiaEntity">
+    select * from qingjia
+    <where>
+      <if test="ch.name != null and ch.name!=''">
+        child_name like concat('%',#{ch.name},'%')
+      </if>
+      <if test="startDate!=null">
+            and apply_date &gt;= #{startDate}
+      </if>
+      <if test="endDate!=null">
+        and apply_date &lt;= #{endDate}
+      </if>
+    </where>
+     <if test="ch.limit!=null">
+			limit #{ch.page}, #{ch.limit}
+	</if>
+  </select>
+  <select id="selectByPrimaryKey" resultType="com.bskms.model.QingjiaEntity">
+    select * from qingjia where id=#{id}
+  </select>
+  <select id="getcount" resultType="int">
+    select count(*) from qingjia
+</select>
+
+</mapper>

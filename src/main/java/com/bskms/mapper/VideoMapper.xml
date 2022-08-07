@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bskms.mapper.VideoMapper">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.bskms.model.VideoEntity" id="videoMap">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="img" column="img"/>
+        <result property="file" column="file"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <insert id="addVideo">
+        insert into video(name,img,file,create_time)
+        values ( #{name,jdbcType=VARCHAR},
+                 #{img,jdbcType=VARCHAR},
+                 #{file,jdbcType=VARCHAR},
+                 #{createTime,jdbcType=DATE}
+               )
+    </insert>
+    <update id="updateVideo">
+        update video <set>
+        <if test="name != null and name!=''">
+            name =#{name,jdbcType=VARCHAR},
+        </if>
+        <if test="img != null and img!=''">
+            img =#{img,jdbcType=VARCHAR},
+        </if>
+        <if test="file != null and file!=''">
+            file =#{file,jdbcType=VARCHAR},
+        </if>
+    </set>
+            where id=#{id}
+    </update>
+    <delete id="delVideo">
+        delete from video where id=#{id}
+    </delete>
+    <select id="getData" resultType="com.bskms.model.VideoEntity">
+        select * from video <where>
+        <if test="name!=null and name!=''">
+                name like  concat('%',#{name},'%')
+        </if>
+    </where>
+     <if test="limit!=null">
+			limit #{page}, #{limit}
+	</if>
+    </select>
+    <select id="selectByPrimaryKey" resultType="com.bskms.model.VideoEntity">
+        select * from video where id=#{id}
+    </select>
+<select id="getCount" resultType="int">
+    select count(*) from video
+</select>
+
+</mapper>

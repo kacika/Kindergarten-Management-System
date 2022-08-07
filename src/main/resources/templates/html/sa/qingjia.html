@@ -1,0 +1,349 @@
+<!DOCTYPE html >
+<html xmlns:th="http://www.thymeleaf.org" xmlns:tiles="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>请假管理</title>
+
+    <link type="text/css" rel="stylesheet" th:href="@{/css/page.css}"/>
+    <script type="text/javascript" th:src="@{/js/jquery/jquery-3.3.1.js}"></script>
+    <!-- mmGrid -->
+    <link rel="stylesheet" type="text/css" th:href="@{/plug/mmGrid/mmGrid.css}"/>
+    <script type="text/javascript"  th:src="@{/plug/mmGrid/mmGrid.js}" ></script>
+    <!-- mmGrid page -->
+    <link rel="stylesheet" type="text/css" th:href="@{/plug/mmGrid/mmPaginator.css}"/>
+    <script type="text/javascript" th:src="@{/plug/mmGrid/mmPaginator.js}" ></script>
+
+    <!-- layer -->
+    <link type="text/css" rel="stylesheet" th:href="@{/plug/layui/css/layui.css}"  media="all"/>
+    <script type="text/javascript" th:src="@{/plug/layui/layui.js}"  charset="utf-8"></script>
+
+    <link type="text/css" rel="stylesheet" th:href="@{/js/layer/skin/layer.css}"/>
+    <script type="text/javascript" th:src="@{/js/layer/layer.js}" ></script>
+    <style type="text/css">
+    </style>
+
+</head>
+<body>
+<div lay-allowclose="true" style="margin-left:15px; width: 98%">
+    <div class="first_div" style="border:none;">
+        <table class="param_table" style="margin-left:10px;" >
+            <tr>
+                <td style="width:150px;" shiro:hasRole="园长">
+                    <span>幼儿姓名：</span>
+                    <input type="text" id="name" name="name" class="input_0" />
+                </td>
+                <td style="width:150px;">
+                    <span>开始时间：</span>
+                    <input type="text" id="startDate" name="startTime" class="input_0" />
+                </td>
+                <td style="width:150px;">
+                    <span>结束时间：</span>
+                    <input type="text" id="endDate" name="endTime" class="input_0" />
+                </td>
+                <td style="">
+                    <div class="layui-btn-group">
+                        <button class="layui-btn" onclick="search()">查询</button>
+                        <button class="layui-btn" onclick="addRow()" shiro:hasRole="家长">增加</button>
+						<button class="layui-btn" id="btnRemoveSelected" shiro:hasRole="园长">删除</button>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div style="margin:3px 10px 10px 10px;"></div>
+        <div id="exampleTableUser" style="margin-top:5px;" ></div>
+        <div id="paginator11-1" align="right" style="margin-right:10px;" ></div>
+    </div>
+</div>
+</body>
+</html>
+
+
+<script>
+    var ishasRoleAdmin=false;
+</script>
+    <shiro:hasRole name="园长">
+<script>
+    ishasRoleAdmin=true;
+</script>
+    </shiro:hasRole>
+    
+ <script>
+    var ishasRolePa=false;
+</script>
+    <shiro:hasRole name="家长">
+<script>
+    ishasRolePa=true;
+</script>
+    </shiro:hasRole>
+    
+  <script>
+    var ishasRoleTe=false;
+</script>
+    <shiro:hasRole name="教师">
+<script>
+    ishasRoleTe=true;
+</script>
+    </shiro:hasRole>
+    
+<script type="text/javascript"  th:inline="javascript">
+
+    layui.use('laydate', function(){
+        var laydate = layui.laydate;
+
+        //执行一个laydate实例
+        laydate.render({
+            elem: '#startDate' //指定元素
+        });
+        laydate.render({
+            elem: '#endDate' //指定元素
+        });
+    });
+    var manageChild = [[${manageChild}]]; //children
+
+    var mmg = false;
+   $(function(){
+        //表格
+         mmg =$('#exampleTableUser').mmGrid({
+            root:'rows',// 和后台数据保存列一致,对应MMGridPageVoBean rows
+            url:"/ls/getAllDataByLimit",
+            width: 'auto',
+            height: 'auto',
+            checkCol: true,
+            fullWidthRows: true, //表格第一次加载数据时列伸展，自动充满表格
+            showBackboard: false,
+            multiSelect: true,
+            indexCol: true,  //索引列
+            params:function(){
+                var param = new Object();
+                if ((ishasRolePa) && (manageChild)){
+                	
+                	param.name = manageChild.name;
+                }else{
+                	   param.name = $.trim($("#name").val());
+                }
+             
+                param.startDate=$.trim($("#startDate").val());
+                param.endDate=$.trim($("#endDate").val());
+
+                return param;
+            },
+            cols: [{title: 'ID', name: 'id', width:60, hidden:true},
+                {title: '幼儿姓名', name: 'childName', width:40},
+                {title: '家长姓名', name: 'parentName', width:40},
+                {title: '请假类型', name: 'type', width:10, renderer:function(val, item, rowIndex){
+                        if(val == 0){
+                            return "事假";
+                        }else if(val == 1){
+                            return "病假";
+                        }
+                        return "";
+                    }},
+                {title: '详细信息', name: 'detail', width:80},
+                {title: '状态', name: 'status', width:20, sortable:true, renderer:function(val, item, rowIndex){
+                        if(val == 1){
+                            return "已同意";
+                        }else if(val == 0){
+                            return "未同意";
+                        }
+                        return "";
+                    }},
+                    {title: '申假开始日期', name: 'applyStartDate', width:30, sortable:true, renderer:function(val, item, rowIndex){
+                    	if(val){
+                            return (""+val).split(" ")[0];
+                        }
+                        return "";
+                    }},
+                    {title: '申假结束日期', name: 'applyEndDate', width:30, sortable:true, renderer:function(val, item, rowIndex){
+                    	if(val){
+                            return (""+val).split(" ")[0];
+                        }
+                        return "";
+                    }},
+                {title: '创建日期', name: 'applyDate', width:30, sortable:true, renderer:function(val, item, rowIndex){
+                        if(val){
+                            return (""+val).split(" ")[0];
+                        }
+                        return "";
+                    }},
+                {title: '操作', name: 'id', width:90, renderer:function(val, item, rowIndex){
+                	
+                    if (ishasRoleAdmin){
+                    	 var buttonStr='';
+                         if (item.status==0){
+                             buttonStr=buttonStr+'<span class="layui-btn layui-btn-sm" onclick="accept('+"\'"+item.id+"\'"+')" >同意</span>';
+                             buttonStr = buttonStr+'<span class="layui-btn layui-btn-sm" onclick="editRowOne('+"\'"+item.id+"\'"+')" >修改</span>';
+                         }
+
+                         buttonStr = buttonStr+'<span class=" layui-btn layui-btn-danger layui-btn-sm" onclick="deleteRowOne('+"\'"+item.id+"\'"+')" >删除</span>';
+
+                     return "<div class='span_btus'  >" + buttonStr + "</div>";
+                    }else if(ishasRolePa){
+                    	 var buttonStr='';
+                    	if (item.status==0){
+                  
+                            buttonStr = buttonStr+'<span class="layui-btn layui-btn-sm" onclick="editRowOne('+"\'"+item.id+"\'"+')" >修改</span>';
+                        }
+                    	return "<div class='span_btus'  >" + buttonStr + "</div>";
+                    }else if(ishasRoleTe){
+                    	var buttonStr='';
+                        if (item.status==0){
+                            buttonStr=buttonStr+'<span class="layui-btn layui-btn-sm" onclick="accept('+"\'"+item.id+"\'"+')" >同意</span>';
+                            buttonStr = buttonStr+'<span class="layui-btn layui-btn-sm" onclick="editRowOne('+"\'"+item.id+"\'"+')" >修改</span>';
+                        }
+
+                        buttonStr = buttonStr+'<span class=" layui-btn layui-btn-danger layui-btn-sm" onclick="deleteRowOne('+"\'"+item.id+"\'"+')" >删除</span>';
+                        return "<div class='span_btus'  >" + buttonStr + "</div>";
+                    }
+                   
+                    }}
+            ],
+            plugins : [
+                $('#paginator11-1').mmPaginator({
+                    totalCountName: 'total',    //对应MMGridPageVoBean count
+                    page: 1,                    //初始页
+                    pageParamName: 'page',      //当前页数
+                    limitParamName: 'limit', //每页数量
+                    limitList: [10, 20, 30, 50]
+                })
+            ]
+        });
+        
+     // 删除
+ 	   $('#btnRemoveSelected').on('click', function(){
+ 			var selectedIndexes = mmg.selectedRowsIndex();
+ 	        var selectedRows = mmg.selectedRows();
+ 			//for(var i=0;i<selectedRows.length;i++){
+ 			//id = (selectedRows[i].userId);
+ 			//}
+ 		   layer.confirm('确认删除吗？', {icon: 3, title:'提示'}, function(index){
+ 			    var Separam = [];
+ 			    ids = [];
+ 			    for(var i=0;i<selectedRows.length;i++){
+ 					ids.push(selectedRows[i].id);
+ 				}
+ 				Separam.push({"name":"ids", "value":ids});
+ 		    	//console.log(Separam);
+ 				$.ajax({
+ 		    		type:"POST",
+ 		    		async:true,  //默认true,异步
+ 		    		data:Separam,
+ 		    		url:"/ls/delQJ",
+ 		    		success:function(data){
+ 		    			if(data == "SUCCESS"){
+ 		    				layer.alert('批量删除成功！', {icon: 1}, function(indexOk){
+ 		    					search();
+ 		    					layer.close(indexOk);
+ 		       				});
+ 		    			}else if(data=="DontOP"){
+ 		    				layer.alert('批量删除失败！自己不能删除自己！', {icon: 2}, function(indexNo){
+ 		       					layer.close(indexNo);
+ 		       				});
+ 		    			}else{
+ 		    				layer.alert('批量删除失败！', {icon: 2}, function(indexNo){
+ 		       					layer.close(indexNo);
+ 		       				});
+ 		    			}
+ 		    	    }
+ 		    	});
+ 			});
+ 		   
+ 		   
+ 	       //var selectedIndexes = mmg.selectedRowsIndex();
+ 	       //var selectedRows = mmg.selectedRows();
+ 			//for(var i=0;i<selectedRows.length;i++){
+ 			//id = (selectedRows[i].userId);
+ 			//}
+
+ 	       // mmg.removeRow(selectedIndexes);
+ 	   });
+        
+    });
+    
+    
+    //同意
+    function accept(id){
+        var param = new Object();
+        param.id=id;
+        param.status=1
+        $.ajax({
+            type:"POST",
+            async:true,  //默认true,异步
+            data:param,
+            url:"/ls/updateQJ",
+            success:function(data){
+                if(data == "SUCCESS"){
+                    layer.alert('处理成功！', {icon: 1}, function(indexOk){
+                        search();
+                        layer.close(indexOk);
+                    });
+                }else if(data=="DontOP"){
+                    layer.alert('删除失败！自己不能删除自己！', {icon: 2}, function(indexNo){
+                        layer.close(indexNo);
+                    });
+                }else{
+                    layer.alert('处理失败！', {icon: 2}, function(indexNo){
+                        layer.close(indexNo);
+                    });
+                }
+            }
+        });
+    }
+    //查询
+    function search(){
+        $('#exampleTableUser').mmGrid().load({"page":1});
+    }
+
+    //删除一行
+    function deleteRowOne(id){
+        layer.confirm('确认删除吗？', {icon: 3, title:'提示'}, function(index){
+            var param = [];
+            param.push({"name":"ids", "value":id});
+            $.ajax({
+                type:"POST",
+                async:true,  //默认true,异步
+                data:param,
+                url:"/ls/delQJ",
+                success:function(data){
+                    if(data == "SUCCESS"){
+                        layer.alert('删除成功！', {icon: 1}, function(indexOk){
+                            search();
+                            layer.close(indexOk);
+                        });
+                    }else if(data=="DontOP"){
+                        layer.alert('删除失败！自己不能删除自己！', {icon: 2}, function(indexNo){
+                            layer.close(indexNo);
+                        });
+                    }else{
+                        layer.alert('删除失败！', {icon: 2}, function(indexNo){
+                            layer.close(indexNo);
+                        });
+                    }
+                }
+            });
+        });
+    }
+    //增加用户
+    function addRow(){
+        layer.open({
+            type: 2,
+            title: '申请请假',
+            area: ['55%', '90%'],//宽高
+            content: '/ls/addQingjia' //iframe的url
+        });
+    }
+    //修改标签
+    function editRowOne(id){
+        layer.open({
+            type: 2,
+            title: '修改信息',
+            area: ['70%', '90%'],
+            content: '/ls/addQingjia?id='+id //iframe的url
+        });
+    }
+
+
+</script>
+
+

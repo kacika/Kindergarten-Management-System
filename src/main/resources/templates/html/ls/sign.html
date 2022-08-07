@@ -1,0 +1,216 @@
+<!DOCTYPE html >
+<html xmlns:th="http://www.thymeleaf.org" xmlns:tiles="http://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>考勤统计表</title>
+<link type="text/css" rel="stylesheet" th:href="@{/css/page.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery/jquery-3.3.1.js}"></script>
+<!-- mmGrid -->
+<link rel="stylesheet" type="text/css" th:href="@{/plug/mmGrid/mmGrid.css}"/>
+<script type="text/javascript"  th:src="@{/plug/mmGrid/mmGrid.js}" ></script>
+<!-- mmGrid page -->
+<link rel="stylesheet" type="text/css" th:href="@{/plug/mmGrid/mmPaginator.css}"/>
+<script type="text/javascript" th:src="@{/plug/mmGrid/mmPaginator.js}" ></script>
+
+<!-- layer -->
+<link type="text/css" rel="stylesheet" th:href="@{/plug/layui/css/layui.css}"  media="all"/>
+<script type="text/javascript" th:src="@{/plug/layui/layui.js}"  charset="utf-8"></script>
+
+<link type="text/css" rel="stylesheet" th:href="@{/js/layer/skin/layer.css}"/>
+<script type="text/javascript" th:src="@{/js/layer/layer.js}" ></script>
+<style type="text/css">
+</style>
+
+</head>
+<body>
+<div  lay-allowclose="true" style="margin-left:15px; width: 98%">
+<div class="first_div" style="border:none;">
+	<table class="param_table" style="margin-left:10px;" >
+		<tr>
+			<td style="width:150px;">
+				<span>开始时间：</span>
+				<input type="text" id="startTime" name="startTime" class="input_0" />
+			</td>
+			<td style="width:150px;">
+				<span>结束时间：</span>
+				<input type="text" id="endTime" name="endTime" class="input_0" />
+			</td>
+			
+		
+			<td style="">
+			<div class="layui-btn-group">
+			  <button class="layui-btn" onclick="search()">查询</button>
+			  <button class="layui-btn" id="btnRemoveSelected" shiro:hasRole="园长">删除</button>
+			</div>
+			</td>
+		</tr>
+	</table>
+	
+	<div style="margin:3px 10px 10px 10px;"></div>
+	<div id="exampleTableUser" style="margin-top:5px;" ></div>
+	<div id="paginator11-1" align="right" style="margin-right:10px;" ></div>
+</div>
+</div>
+</body>
+</html>
+
+<script type="text/javascript" th:inline="javascript">
+var mmg = false;
+layui.use('laydate', function(){
+	  var laydate = layui.laydate;
+	  
+	  //执行一个laydate实例
+	  laydate.render({
+	    elem: '#startTime' //指定元素
+	  });
+	  laydate.render({
+		elem: '#endTime' //指定元素
+	 });
+});
+
+function getNextDay(d){
+    d = new Date(d);
+    d = +d + 1000*60*60*24;
+    d = new Date(d);
+    //return d;
+    //格式化
+    return d.getFullYear()+"-"+(d.getMonth()+1).toString().padStart(2,'0')+"-"+d.getDate().toString().padStart(2,'0');
+     
+}
+
+$(function(){	
+	//表格
+	mmg = $('#exampleTableUser').mmGrid({
+    	root:'rows',// 和后台数据保存列一致,对应MMGridPageVoBean rows
+		url:"/ls/getAllSignByLimit",
+    	width: 'auto',
+    	height: 'auto',
+    	checkCol: true,
+    	fullWidthRows: true, //表格第一次加载数据时列伸展，自动充满表格
+    	showBackboard: false,
+        multiSelect: true,
+        indexCol: true,  //索引列
+        params:function(){
+        	var param = new Object();
+       	
+        	param.startTime = $.trim($("#startTime").val());
+        	param.id = $.trim($("#id").val());
+        	param.endTime = $.trim($("#endTime").val());
+        	if(param.endTime == ""){
+        		
+        	}else{ // 让结束时间加一天使得开始和结束均设置为同一天时有对应数据
+        		param.endTime = getNextDay($.trim($("#endTime").val()));
+        	}
+        	 //console.log($.trim($("#endTime").val()));
+        	// console.log(getNextDay($.trim($("#endTime").val())));
+        	return param;
+        },
+        cols: [{title: 'ID', name: 'id', width:60, hidden:true},
+			   {title: '考勤人', name: 'userName', width:50},
+			   {title: '状态', name: 'state', width:50, sortable:true, renderer:function(val, item, rowIndex){
+				   if(val == 1){
+					   return "<span>正常</span>";
+				   }else if(val == 2){
+					   return "<span>提前</span>";
+				   }else if(val == 3){
+					   return "<span>迟到</span>";
+				   }else if(val == 4){
+					   return "<span>请假</span>";
+				   }else if(val == 5){
+					   return "<span>未知</span>";
+				   }
+			   }},
+			   {title: '考勤类型', name: 'type', width:50, sortable:true, renderer:function(val, item, rowIndex){
+				   if(val == 1){
+					   return "<span>上班</span>";
+				   }else if(val == 2){
+					   return "<span>下班</span>";
+				   }
+			   }},
+			   {title: '考勤人类型', name: 'kqrType', width:50, sortable:true, renderer:function(val, item, rowIndex){
+				   if(val == 1){
+					   return "<span>老师</span>";
+				   }else if(val == 2){
+					   return "<span>学生</span>";
+				   }else if(val == 3){
+					   return "<span>家长</span>";
+				   }
+			   }},
+			   {title: '签到时间', name: 'signIn', width:50, sortable:true, renderer:function(val, item, rowIndex){
+				   if(val){
+					   return (""+val);
+				   }
+				  
+			   }}
+			  
+			  
+           ],
+        plugins : [
+        	$('#paginator11-1').mmPaginator({
+        		totalCountName: 'total',    //对应MMGridPageVoBean count
+        		page: 1,                    //初始页
+        		pageParamName: 'page',      //当前页数
+        		limitParamName: 'limit', //每页数量
+        		limitList: [10, 20, 30, 50]
+        	})
+        ]
+    });
+	
+	// 删除
+	   $('#btnRemoveSelected').on('click', function(){
+			var selectedIndexes = mmg.selectedRowsIndex();
+	        var selectedRows = mmg.selectedRows();
+			//for(var i=0;i<selectedRows.length;i++){
+			//id = (selectedRows[i].userId);
+			//}
+		   layer.confirm('确认删除吗？', {icon: 3, title:'提示'}, function(index){
+			    var Separam = [];
+			    ids = [];
+			    for(var i=0;i<selectedRows.length;i++){
+					ids.push(selectedRows[i].id);
+				}
+				Separam.push({"name":"ids", "value":ids});
+		    	//console.log(Separam);
+				$.ajax({
+		    		type:"POST",
+		    		async:true,  //默认true,异步
+		    		data:Separam,
+		    		url:"/ls/delSign",
+		    		success:function(data){
+		    			if(data == "SUCCESS"){
+		    				layer.alert('批量删除成功！', {icon: 1}, function(indexOk){
+		    					search();
+		    					layer.close(indexOk);
+		       				});
+		    			}else if(data=="DontOP"){
+		    				layer.alert('批量删除失败！自己不能删除自己！', {icon: 2}, function(indexNo){
+		       					layer.close(indexNo);
+		       				});
+		    			}else{
+		    				layer.alert('批量删除失败！', {icon: 2}, function(indexNo){
+		       					layer.close(indexNo);
+		       				});
+		    			}
+		    	    }
+		    	});
+			});
+		   
+		   
+	       //var selectedIndexes = mmg.selectedRowsIndex();
+	       //var selectedRows = mmg.selectedRows();
+			//for(var i=0;i<selectedRows.length;i++){
+			//id = (selectedRows[i].userId);
+			//}
+
+	       // mmg.removeRow(selectedIndexes);
+	   });
+	
+});
+
+//查询
+function search(){
+	$('#exampleTableUser').mmGrid().load({"page":1});
+}
+
+</script>

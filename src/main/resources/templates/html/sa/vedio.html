@@ -1,0 +1,251 @@
+<!DOCTYPE html >
+<html xmlns:th="http://www.thymeleaf.org" xmlns:tiles="http://www.thymeleaf.org">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>学习资源</title>
+	<link type="text/css" rel="stylesheet" th:href="@{/css/page.css}"/>
+	<script type="text/javascript" th:src="@{/js/jquery/jquery-3.3.1.js}"></script>
+	<!-- mmGrid -->
+	<link rel="stylesheet" type="text/css" th:href="@{/plug/mmGrid/mmGrid.css}"/>
+	<script type="text/javascript"  th:src="@{/plug/mmGrid/mmGrid.js}" ></script>
+	<!-- mmGrid page -->
+	<link rel="stylesheet" type="text/css" th:href="@{/plug/mmGrid/mmPaginator.css}"/>
+	<script type="text/javascript" th:src="@{/plug/mmGrid/mmPaginator.js}" ></script>
+
+	<!-- layer -->
+	<link type="text/css" rel="stylesheet" th:href="@{/plug/layui/css/layui.css}"  media="all"/>
+	<script type="text/javascript" th:src="@{/plug/layui/layui.js}"  charset="utf-8"></script>
+
+	<link type="text/css" rel="stylesheet" th:href="@{/js/layer/skin/layer.css}"/>
+	<script type="text/javascript" th:src="@{/js/layer/layer.js}" ></script>
+	<style type="text/css">
+	</style>
+	<script>
+		var ishasRoleAdmin=false;
+	</script>
+	<shiro:hasRole name="园长">
+		<script>
+			ishasRoleAdmin=true;
+		</script>
+	</shiro:hasRole>
+</head>
+<body>
+<div  lay-allowclose="true" style="margin-left:15px; width: 98%">
+	<div class="first_div" style="border:none;">
+		<table class="param_table" style="margin-left:10px;" >
+			<tr>
+				<td style="width:150px;">
+					<span>视频名称：</span>
+					<input type="text" id="name" name="name" class="input_0" />
+				</td>
+				<td style="">
+					<div class="layui-btn-group">
+						<button class="layui-btn" onclick="search()">查询</button>
+						<button class="layui-btn" onclick="addRow()" shiro:hasRole="园长">增加<script>
+							ishasRoleAdmin=true;
+						</script></button>
+						<button class="layui-btn" id="btnRemoveSelected" shiro:hasRole="园长">删除</button>
+					</div>
+				</td>
+			</tr>
+		</table>
+
+		<div style="margin:3px 10px 10px 10px;"></div>
+		<div id="exampleTableUser" style="margin-top:5px;" ></div>
+		<div id="paginator11-1" align="right" style="margin-right:10px;" ></div>
+	</div>
+</div>
+</body>
+</html>
+
+
+<script type="text/javascript" th:inline="javascript">
+	layui.use('laydate', function(){
+		var laydate = layui.laydate;
+		laydate.render({
+			elem: '#startTime'
+		});
+		laydate.render({
+			elem: '#endTime'
+		});
+	});
+	
+	var mmg = false;
+	$(function(){
+		//表格
+		mmg = $('#exampleTableUser').mmGrid({
+			root:'rows',// 和后台数据保存列一致,对应MMGridPageVoBean rows
+			url:"/sa/getAllVideoByLimit",
+			width: 'auto',
+			height: 'auto',
+			checkCol: true,
+			fullWidthRows: true, //表格第一次加载数据时列伸展，自动充满表格
+			showBackboard: false,
+			multiSelect: true,
+			indexCol: true,  //索引列
+			params:function(){
+				var param = new Object();
+				param.name = $.trim($("#name").val());
+				return param;
+			},
+			cols: [{title: 'ID', name: 'id', width:60, hidden:true},
+				{title: '视频名称', name: 'name', width:50},
+				{title: '视频', name: 'img', width:80,renderer:function (val, item, rowIndex) {
+						var src=[[@{/upload/}]]+item.img
+						var img="<img  onclick='previewImg(this)' id='"+item.file+"' style=\"width:80px;height: 80px\" src="+src+"/>"
+						return img
+					},
+				},
+				{title: '创建日期', name: 'createTime', width:50, renderer:function(val, item, rowIndex){
+						return val.split(" ")[0];
+					}},
+				{title: '操作', name: 'id', width:30, renderer:function(val, item, rowIndex){
+						if(ishasRoleAdmin){
+							var buttonStr = '<span class="layui-btn layui-btn-sm" onclick="editRowOne('+"\'"+item.id+"\'"+')" >修改</span>' +
+									'<span class=" layui-btn layui-btn-danger layui-btn-sm" onclick="deleteRowOne('+"\'"+item.id+"\'"+')" >删除</span>';
+							return "<div class='span_btus' >" + buttonStr + "</div>";
+						}
+					}}
+			],
+			plugins : [
+				$('#paginator11-1').mmPaginator({
+					totalCountName: 'total',    //对应MMGridPageVoBean count
+					page: 1,                    //初始页
+					pageParamName: 'page',      //当前页数
+					limitParamName: 'limit', //每页数量
+					limitList: [10, 20, 30, 50]
+				})
+			]
+		});
+		
+		// 删除
+		   $('#btnRemoveSelected').on('click', function(){
+				var selectedIndexes = mmg.selectedRowsIndex();
+		        var selectedRows = mmg.selectedRows();
+				//for(var i=0;i<selectedRows.length;i++){
+				//id = (selectedRows[i].userId);
+				//}
+			   layer.confirm('确认删除吗？', {icon: 3, title:'提示'}, function(index){
+				    var Separam = [];
+				    ids = [];
+				    for(var i=0;i<selectedRows.length;i++){
+						ids.push(selectedRows[i].id);
+					}
+					Separam.push({"name":"ids", "value":ids});
+			    	//console.log(Separam);
+					$.ajax({
+			    		type:"POST",
+			    		async:true,  //默认true,异步
+			    		data:Separam,
+			    		url:"/sa/delVideo",
+			    		success:function(data){
+			    			if(data == "SUCCESS"){
+			    				layer.alert('批量删除成功！', {icon: 1}, function(indexOk){
+			    					search();
+			    					layer.close(indexOk);
+			       				});
+			    			}else if(data=="DontOP"){
+			    				layer.alert('批量删除失败！自己不能删除自己！', {icon: 2}, function(indexNo){
+			       					layer.close(indexNo);
+			       				});
+			    			}else{
+			    				layer.alert('批量删除失败！', {icon: 2}, function(indexNo){
+			       					layer.close(indexNo);
+			       				});
+			    			}
+			    	    }
+			    	});
+				});
+			   
+			   
+		       //var selectedIndexes = mmg.selectedRowsIndex();
+		       //var selectedRows = mmg.selectedRows();
+				//for(var i=0;i<selectedRows.length;i++){
+				//id = (selectedRows[i].userId);
+				//}
+
+		       // mmg.removeRow(selectedIndexes);
+		   });
+		
+	});
+
+	//视频放大预览
+	function previewImg(obj) {
+		var img = new Image();
+		img.src = obj.src;
+		var height = 200; //获取图片高度
+		var width = 300; //获取图片宽度
+		var src=[[@{/upload/}]]+obj.id
+		var videoHtml = "<video src='" + src + "' width='100%' height='100%' autoplay controls> </video>";
+		//弹出层
+		layer.open({
+			type: 1,
+			shade: 0.8,
+			offset: 'auto',
+			area: [width + 'px', height + 'px'],
+			shadeClose: true,
+			scrollbar: false,
+			title: "视频预览", //不显示标题
+			content: videoHtml, //捕获的元素，注意：最好该指定的元素要存放在body最外层，否则可能被其它的相对元素所影响
+			cancel: function () {
+				//layer.msg('捕获就是从页面已经存在的元素上，包裹layer的结构', { time: 5000, icon: 6 });
+			}
+		});
+	}
+
+	//查询
+	function search(){
+		$('#exampleTableUser').mmGrid().load({"page":1});
+	}
+
+	//删除一行
+	function deleteRowOne(id){
+		layer.confirm('确认删除吗？', {icon: 3, title:'提示'}, function(index){
+			var param = [];
+			param.push({"name":"ids", "value":id});
+			$.ajax({
+				type:"POST",
+				async:true,  //默认true,异步
+				data:param,
+				url:"/sa/delVideo",
+				success:function(data){
+					if(data == "SUCCESS"){
+						layer.alert('删除成功！', {icon: 1}, function(indexOk){
+							search();
+							layer.close(indexOk);
+						});
+					}else if(data=="DontOP"){
+						layer.alert('删除失败！自己不能删除自己！', {icon: 2}, function(indexNo){
+							layer.close(indexNo);
+						});
+					}else{
+						layer.alert('删除失败！', {icon: 2}, function(indexNo){
+							layer.close(indexNo);
+						});
+					}
+				}
+			});
+		});
+	}
+	//增加用户
+	function addRow(){
+		layer.open({
+			type: 2,
+			title: '增加资源',
+			area: ['55%', '90%'],//宽高
+			content: '/sa/addVideoPage' //iframe的url
+		});
+	}
+	//修改标签
+	function editRowOne(id){
+		layer.open({
+			type: 2,
+			title: '修改菜谱',
+			area: ['70%', '90%'],
+			content: '/sa/addVideoPage?id='+id //iframe的url
+		});
+	}
+
+
+</script>

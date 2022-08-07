@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html style="height: 90%; width: 100%" xmlns:th="http://www.thymeleaf.org" xmlns:tiles="http://www.thymeleaf.org">
+   <head>
+       <meta charset="utf-8">
+       <!-- layui -->
+    <link type="text/css" rel="stylesheet" th:href="@{/plug/layui/css/layui.css}"  media="all"/>
+    <script type="text/javascript" th:src="@{/plug/layui/layui.js}"  charset="utf-8"></script>
+   </head>
+   <body style="height: 90%;width: 100%; margin: 0">
+       <script type="text/javascript" th:src="@{/js/jquery/jquery-3.3.1.js}"></script>
+       <script type="text/javascript" th:src="@{/js/echarts/echarts.js}"></script>
+       <!-- <table class="param_table" style="margin-left:10px;" >
+		<tr>
+       <td style="width:150px; padding-right:20px">
+				<span>按年月查询：</span>
+		        <input type="text" class="layui-input" id="minDate" name="minDate" placeholder="yyyy-MM">
+		</td>
+		<td style="">
+		<div class="layui-btn-group">
+			  <button class="layui-btn" onclick="search()">查询</button>
+			</div>
+		</td>
+		</tr>
+	</table>  -->
+        <div id="container" style="height: 90%;width: 100%">
+        
+        </div>
+   </body>
+</html>
+
+<script type="text/javascript" th:inline="javascript">
+
+/*function dateFormat(fmt, date) {
+    let ret;
+    var date = new Date(date);
+    const opt = {
+        "y+": date.getFullYear().toString(),        // 年
+        "m+": (date.getMonth() + 1).toString(),     // 月
+        "d+": date.getDate().toString(),            // 日
+        "h+": date.getHours().toString(),           // 时
+        "M+": date.getMinutes().toString(),         // 分
+        "s+": date.getSeconds().toString()          // 秒
+        // 有其他格式化字符需求可以继续添加，必须转化成字符串
+    };
+    for (let k in opt) {
+        ret = new RegExp("(" + k + ")").exec(fmt);
+        if (ret) {
+            fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+        };
+    };
+    return fmt;
+}*/
+
+
+
+  var names = [[${names}]];
+  var toDoCounts = [[${zc}]];
+  var outTimeCount = [[${tq}]];
+  var aheadCount = [[${cd}]];
+
+  layui.use('laydate', function(){
+	  var laydate = layui.laydate;
+	  
+	//常规用法
+	  laydate.render({
+	    elem: '#minDate'
+	    ,type: 'month'
+	  });
+});
+
+  //if (names == null){
+	  console.log("names"+names);
+	  console.log("toDoCounts"+toDoCounts);
+	  console.log("outTimeCount"+outTimeCount);
+	  console.log("aheadCount"+aheadCount);
+ // }
+  if(names.length == 0){
+	  console.log("空空");
+  }
+/* function search(){
+		var param = new Object();
+		param.startTime = $.trim($("#minDate").val());
+  	//param.endTime = $.trim($("#endTime").val());
+
+	//window.location.href = "/ls/course";
+		console.log(param.startTime);
+		$.ajax({
+    		type:"POST",
+    		async:true,  //默认true,异步
+    		data:param,
+    		url:"/ls/getAllTongjiSignByLimit",
+    		success:function(data){
+    			if(data == "SUCCESS"){
+    				
+    			}
+    	    }
+    	});
+}*/
+
+  
+  var dom = document.getElementById("container");
+  var myChart = echarts.init(dom);
+  var app = {};
+  option = null;
+
+  function fulshEchart(names, toDoCounts, outTimeCount, aheadCount){
+      var n = new Array();
+        n[0] = "user";
+        for (var i = 0; i <  names.length; i++) {
+          n[i+1] = names[i];
+        }
+
+        var t = new Array();
+        t[0] = "正常上下班次数";
+        for (var i = 0; i <  toDoCounts.length; i++) {
+          t[i+1] = toDoCounts[i];
+        }
+
+        var o = new Array();
+        o[0] = "提前下班次数";
+        for (var i = 0; i <  outTimeCount.length; i++) {
+          o[i+1] = outTimeCount[i];
+        }
+
+        var a = new Array();
+        a[0] = "迟到上班次数";
+        for (var i = 0; i <  aheadCount.length; i++) {
+          a[i+1] = aheadCount[i];
+      }
+
+      setTimeout(function () {
+          option = {
+              legend: {},
+              tooltip: {
+                  trigger: 'axis',
+                  showContent: false
+              },
+              dataset: {
+                  source: [
+                      n,
+                      o,
+                      a,
+                      t
+                  ]
+              },
+              xAxis: {type: 'category'},
+              yAxis: {gridIndex: 0},
+              grid: {top: '55%'},
+              series: [
+                  {type: 'line', smooth: true, seriesLayoutBy: 'row'},
+                  {type: 'line', smooth: true, seriesLayoutBy: 'row'},
+                  {type: 'line', smooth: true, seriesLayoutBy: 'row'},
+                  {type: 'line', smooth: true, seriesLayoutBy: 'row'},
+                  {
+                      type: 'pie',
+                      id: 'pie',
+                      radius: '30%',
+                      center: ['50%', '25%'],
+                      label: {
+                          formatter: '{b}: {@2012} ({d}%)'
+                      },
+                      encode: {
+                          itemName: 'user',
+                          value: '2012',
+                          tooltip: '2012'
+                      }
+                  }
+              ]
+          };
+
+          myChart.on('updateAxisPointer', function (event) {
+              var xAxisInfo = event.axesInfo[0];
+              if (xAxisInfo) {
+                  var dimension = xAxisInfo.value + 1;
+                  myChart.setOption({
+                      series: {
+                          id: 'pie',
+                          label: {
+                              formatter: '{b}: {@[' + dimension + ']} ({d}%)'
+                          },
+                          encode: {
+                              value: dimension,
+                              tooltip: dimension
+                          }
+                      }
+                  });
+              }
+          });
+
+          myChart.setOption(option);
+
+      });
+      if (option && typeof option === "object") {
+          myChart.setOption(option, true);
+      }
+  }
+
+  $(function(){
+    fulshEchart(names, toDoCounts, outTimeCount, aheadCount);
+  });
+
+
+</script>
