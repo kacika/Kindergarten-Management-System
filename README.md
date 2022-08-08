@@ -26,6 +26,9 @@
 #### 开发环境
 Jdk1.8+IDEA+Maven
 
-![image](1.png)
+#### 界面展示
+![image](result show/1.png)
+
+
 ### 说明
 未经许可 不可用于商用用途
