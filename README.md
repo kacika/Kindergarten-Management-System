@@ -27,8 +27,11 @@
 Jdk1.8+IDEA+Maven
 
 #### 界面展示
-![image](/result_show/1.png)
-![image](result_show/2.png)
+![image](result_show/1.png)
+![image](https://github.com/kacika/Kindergarten-Management-System/blob/master/result_show/2.png?raw=true)
+![image](result_show/3.png)
+![image](result_show/4.png)
+![image](result_show/5.png)
 
 ### 说明
 未经许可 不可用于商用用途
