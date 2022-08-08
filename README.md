@@ -27,8 +27,8 @@
 Jdk1.8+IDEA+Maven
 
 #### 界面展示
-![image](result show/1.png)
-
+![image](/result_show/1.png)
+![image](result_show/2.png)
 
 ### 说明
 未经许可 不可用于商用用途
